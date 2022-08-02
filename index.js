@@ -1,12 +1,19 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs').promises;
+const crypto = require('crypto');
 
 const app = express();
 app.use(bodyParser.json());
 
 const HTTP_OK_STATUS = 200;
 const PORT = '3000';
+
+function generateToken() {
+  return crypto.randomBytes(8).toString('hex');
+}
+
+module.exports = generateToken;
 
 // Middlewares
 const validationTalker = require('./Middlewares/validation_talkers');
@@ -40,6 +47,11 @@ app.get('/talker/:id', validationTalkerID, (req, res) => {
     console.error(`Não foi possível ler o arquivo. Erro: ${err}`);
     process.exit(1);
   });
+});
+
+app.post('/login', (req, res) => {
+  // const { email, password } = req.body;
+  res.status(200).json({ token: generateToken() });
 });
 
 app.listen(PORT, () => {
