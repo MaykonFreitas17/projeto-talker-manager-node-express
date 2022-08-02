@@ -13,11 +13,10 @@ function generateToken() {
   return crypto.randomBytes(8).toString('hex');
 }
 
-module.exports = generateToken;
-
 // Middlewares
 const validationTalker = require('./Middlewares/validation_talkers');
 const validationTalkerID = require('./Middlewares/validation_talker_id');
+const validationLogin = require('./Middlewares/validation_login');
 
 // não remova esse endpoint, e para o avaliador funcionar
 app.get('/', (_request, response) => {
@@ -49,8 +48,7 @@ app.get('/talker/:id', validationTalkerID, (req, res) => {
   });
 });
 
-app.post('/login', (req, res) => {
-  // const { email, password } = req.body;
+app.post('/login', validationLogin, (_req, res) => {
   res.status(200).json({ token: generateToken() });
 });
 
