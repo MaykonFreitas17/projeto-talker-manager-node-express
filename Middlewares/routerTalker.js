@@ -150,6 +150,20 @@ router.get('/:id', validationTalkerID, (req, res) => {
 });
 
 router.use(validationTokenAuthorization);
+
+router.delete('/:id', validationID, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const data = await fs.readFile(fileDB, 'utf8');
+    const dataJSON = JSON.parse(data);
+    const newList = dataJSON.filter((t) => t.id !== Number(id));
+    fs.writeFile(fileDB, JSON.stringify(newList));
+    res.status(204).end();
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+});
+
 router.use(validationName);
 router.use(validationAge);
 router.use(validationTalk);
