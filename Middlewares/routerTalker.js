@@ -135,6 +135,19 @@ router.get('/', validationTalker, (_req, res) => {
   });
 });
 
+router.get('/search', validationTokenAuthorization, async (req, res) => {
+  try {
+    const { q } = req.query;
+    const data = await fs.readFile(fileDB, 'utf8');
+    const dataJSON = JSON.parse(data);
+    const search = dataJSON.filter((talker) => talker.name.includes(q));
+    if (q === undefined || q === '') return res.status(200).json([]);
+    res.status(200).json(search);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 router.get('/:id', validationTalkerID, (req, res) => {
   fs.readFile(fileDB, 'utf8')
   .then((data) => {
