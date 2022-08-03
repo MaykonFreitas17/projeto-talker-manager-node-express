@@ -4,6 +4,8 @@ const router = express.Router();
 
 const fs = require('fs').promises;
 
+const fileDB = './talker.json';
+
 // Middlewares
 const validationTalker = require('./validation_talkers');
 const validationTalkerID = require('./validation_talker_id');
@@ -108,19 +110,33 @@ function validationTalk(req, res, next) {
   next();
 }
 
+async function validationID(req, res, next) {
+  const { id } = req.params;
+  try {
+    const data = await fs.readFile(fileDB, 'utf8');
+    const dataJSON = JSON.parse(data);
+    const talker = dataJSON.findIndex((t) => t.id === Number(id));
+    if (talker === -1) {
+      return res.status(404).json({ message: 'Talker ID not found' });
+    }
+    next();
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+}
+
 router.get('/', validationTalker, (_req, res) => {
-  fs.readFile('./talker.json', 'utf8')
+  fs.readFile(fileDB, 'utf8')
   .then((data) => {
     res.status(200).json(JSON.parse(data));
   })
   .catch((err) => {
     console.error(`Não foi possível ler o arquivo. Erro: ${err}`);
-    process.exit(1);
   });
 });
 
 router.get('/:id', validationTalkerID, (req, res) => {
-  fs.readFile('./talker.json', 'utf8')
+  fs.readFile(fileDB, 'utf8')
   .then((data) => {
     const { id } = req.params;
     const talkerList = JSON.parse(data);
@@ -128,7 +144,7 @@ router.get('/:id', validationTalkerID, (req, res) => {
     res.status(200).json(talker);
   })
   .catch((err) => {
-    console.error(`Não foi possível ler o arquivo. Erro: ${err}`);
+    console.error(`Não foi possível ler o arquivo. Erro: ${err.message}`);
     process.exit(1);
   });
 });
@@ -152,6 +168,21 @@ router.post('/', async (req, res) => {
     res.status(201).json({ id, name, age, talk });
   } catch (e) {
     res.status(401).json({ message: e });
+  }
+});
+
+router.put('/:id', validationID, async (req, res) => {
+  const { id } = req.params;
+  const { name, age, talk } = req.body;
+  try {
+    const data = await fs.readFile(fileDB, 'utf8');
+    const dataJSON = JSON.parse(data);
+    const talker = dataJSON.findIndex((t) => t.id === Number(id));
+    dataJSON[talker] = { ...dataJSON[talker], name, age, talk };
+    fs.writeFile(fileDB, JSON.stringify(dataJSON));
+    res.status(200).json({ ...dataJSON[talker], name, age, talk });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
   }
 });
 
